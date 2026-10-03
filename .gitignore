@@ -1,6 +1,5 @@
 .pixi/
 dist/
-build/*.o
 __pycache__/
 *.so
 *.pyc
