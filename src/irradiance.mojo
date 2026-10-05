@@ -754,18 +754,21 @@ def _dirint_coeffs(
     var w_bin = bins[2]
     var delta_kt_prime_bin = bins[3]
 
+    # convert unassigned bins to nan. This has to come before the lookup:
+    # a bin of 0 would make the index below negative, and the buffer has no
+    # element in front of it to read. A NaN in any operand leaves every
+    # comparison false and every bin at 0, so this is the ordinary path for a
+    # NaN input rather than a corner case.
+    if (kt_prime_bin == 0) or (zenith_bin == 0) or (w_bin == 0) or (delta_kt_prime_bin == 0):
+        return nan_()
+
     # get the coefficients
     # subtract 1 to account for difference between MATLAB-style bin
     # assignment and Python-style array lookup.
-    var c = coeffs.unsafe_load(
+    return coeffs.unsafe_load(
         ((kt_prime_bin - 1) * 6 + (zenith_bin - 1)) * 7 * 5 +
         (delta_kt_prime_bin - 1) * 5 + (w_bin - 1)
     )
-
-    # convert unassigned bins to nan
-    if (kt_prime_bin == 0) or (zenith_bin == 0) or (w_bin == 0) or (delta_kt_prime_bin == 0):
-        return nan_()
-    return c
 
 
 def _delta_kt_prime(

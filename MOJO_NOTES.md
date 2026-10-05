@@ -1,10 +1,10 @@
 # Mojo dialect notes (verified by probe against the pinned compiler, not by docs)
 
-Toolchain these notes describe: the `mojo` and `max` pins in `pixi.toml`
-(`mojo ==1.2.0.dev2026092905`), which are nightly builds and are the versions
-every claim below was checked against.
-Every claim below was checked by compiling it. Re-verify anything you rely on
-after a toolchain bump rather than trusting this file.
+Toolchain these notes describe: `mojo ==1.2.0.dev2026092905` (set in `MOJO_PIN` in
+`bin/port.sh`; every repo receives this file with the marker already substituted).
+Every claim below was checked by compiling it. `bin/probe-confirm.py` and
+`bin/probe-hints.py` in the factory regenerate the list; re-run them after any
+toolchain bump rather than trusting this file.
 
 ## 0. Two things that break everything if you forget them
 
@@ -191,4 +191,4 @@ it expected:
 def _p() -> Int:
     return simd_width_of[DType.float64]()   # -> "did you mean to import it from 'std.sys'?"
 ```
-No hint means the symbol is gone, not relocated.
+No hint means the symbol is gone, not relocated. `bin/probe-hints.py` automates this.
