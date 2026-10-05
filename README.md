@@ -23,7 +23,7 @@ poa["poa_global"]
 Every function keeps pvlib's name, argument order, defaults and return
 convention, so moving from `import pvlib` to `import mojopvlib` is a rename.
 Each one is tested against real pvlib on the same inputs and has to agree with
-it; the suite is 395 tests, of which 93 live in `tests/test_kernels.py` and
+it; the suite is 396 tests, of which 94 live in `tests/test_kernels.py` and
 name all 57 `@export`ed kernels individually, calling them through ctypes with
 hand-built buffers and asserting on the values that come back, so a kernel
 that is wired up and wired to the wrong buffer fails rather than shipping
@@ -143,8 +143,10 @@ parallelize` does not resolve on this toolchain.
 
 ## Performance
 
-Measured with `pixi run bench` (which holds a machine-wide flock so a
-concurrently running job cannot distort it) on:
+Every figure below comes from `pixi run bench` on this machine. That task holds
+a machine-wide flock so a concurrently running job cannot distort it, and each
+case is best-of-5 within a run. The table is the per-case median of seven
+invocations:
 
 ```
 Intel(R) Xeon(R) CPU E5-2697 v4 @ 2.30GHz (72 threads)
@@ -152,210 +154,110 @@ python 3.13.14, numpy 2.5.1, pvlib 0.16.1
 best of 5 runs per case, median of 7 invocations of `pixi run bench`
 ```
 
-This host is shared and was running at a load average of 75 on a 72-thread
-box throughout, so the absolute milliseconds are inflated relative to an idle
-machine and a single invocation is not a stable number. The figures below are
-the per-case median of seven `pixi run bench` runs, each of which is itself
-best-of-5. Run to run the parallel figures vary by a factor of two or three;
-both sides of every ratio are measured in the same run, so the ratios are the
-meaningful column, and they are the reason nothing here is claimed to a decimal
-place.
+This host is shared and was heavily loaded throughout, so the absolute
+milliseconds are inflated relative to an idle machine and a single invocation
+is not a stable number. Run to run the figures vary by a factor of two or
+three; both sides of every ratio are measured in the same invocation, so the
+ratios are the meaningful column, and they are the reason nothing here is
+claimed to a decimal place.
 
 | case | mojo-pvlib | pvlib | |
 | --- | ---: | ---: | --- |
-| `spa_python (8760 timestamps)` | 10.53 ms | 82.09 ms | **7.8x faster** |
-| `nrel_earthsun_distance (8760)` | 7.16 ms | 14.02 ms | **2.0x faster** |
-| `get_solarposition (8760)` | 10.50 ms | 81.20 ms | **7.7x faster** |
-| `calculate_deltat (8760)` | 0.12 ms | 8.25 ms | **68.8x faster** |
-| `equation_of_time_spencer71 (1M)` | 19.37 ms | 97.87 ms | **5.1x faster** |
-| `get_relative_airmass (1M)` | 19.07 ms | 71.76 ms | **3.8x faster** |
-| `tdew_from_rh (1M)` | 17.37 ms | 33.12 ms | **1.9x faster** |
-| `campbell_norman (1M)` | 23.52 ms | 121.78 ms | **5.2x faster** |
-| `diffuse_par_spitters (1M)` | 16.76 ms | 84.45 ms | **5.0x faster** |
-| `tools.cosd (1M)` | 15.84 ms | 19.90 ms | **1.3x faster** |
-| `get_extra_radiation (1M)` | 19.52 ms | 99.68 ms | **5.1x faster** |
-| `clearsky_index (1M)` | 11.79 ms | 20.34 ms | **1.7x faster** |
-| `aoi_projection (1M)` | 18.62 ms | 89.32 ms | **4.8x faster** |
-| `erbs (1M)` | 45.59 ms | 238.22 ms | **5.2x faster** |
-| `boland (1M)` | 45.64 ms | 183.30 ms | **4.0x faster** |
-| `disc (1M)` | 29.58 ms | 272.60 ms | **9.2x faster** |
-| `dni from ghi/dhi (1M)` | 21.76 ms | 27.67 ms | **1.3x faster** |
-| `isotropic (1M)` | 18.49 ms | 19.49 ms | **1.1x faster** |
-| `haydavies (1M)` | 28.72 ms | 165.50 ms | **5.8x faster** |
-| `reindl (1M)` | 27.92 ms | 233.26 ms | **8.4x faster** |
-| `perez (1M)` | 28.27 ms | 309.51 ms | **10.9x faster** |
-| `dirint (8760 hourly)` | 2.32 ms | 24.01 ms | **10.3x faster** |
-| `get_total_irradiance haydavies (1M)` | 82.47 ms | 297.98 ms | **3.6x faster** |
+| `spa_python (8760 timestamps)` | 23.62 ms | 144.61 ms | **6.1x faster** |
+| `nrel_earthsun_distance (8760)` | 13.48 ms | 16.80 ms | **1.2x faster** |
+| `get_solarposition (8760)` | 18.84 ms | 148.12 ms | **7.9x faster** |
+| `calculate_deltat (8760)` | 0.19 ms | 10.91 ms | **57.4x faster** |
+| `equation_of_time_spencer71 (1M)` | 39.74 ms | 193.26 ms | **4.9x faster** |
+| `get_relative_airmass (1M)` | 29.64 ms | 116.24 ms | **3.9x faster** |
+| `tdew_from_rh (1M)` | 22.92 ms | 40.89 ms | **1.8x faster** |
+| `campbell_norman (1M)` | 37.73 ms | 207.43 ms | **5.5x faster** |
+| `diffuse_par_spitters (1M)` | 27.02 ms | 136.27 ms | **5.0x faster** |
+| `tools.cosd (1M)` | 20.31 ms | 23.29 ms | **1.1x faster** |
+| `get_extra_radiation (1M)` | 27.29 ms | 163.53 ms | **6.0x faster** |
+| `clearsky_index (1M)` | 13.88 ms | 23.47 ms | **1.7x faster** |
+| `aoi_projection (1M)` | 29.29 ms | 165.06 ms | **5.6x faster** |
+| `erbs (1M)` | 86.46 ms | 426.65 ms | **4.9x faster** |
+| `boland (1M)` | 93.07 ms | 327.76 ms | **3.5x faster** |
+| `disc (1M)` | 45.37 ms | 485.98 ms | **10.7x faster** |
+| `dni from ghi/dhi (1M)` | 26.02 ms | 33.15 ms | **1.3x faster** |
+| `isotropic (1M)` | 24.31 ms | 26.29 ms | **1.1x faster** |
+| `haydavies (1M)` | 41.32 ms | 329.27 ms | **8.0x faster** |
+| `reindl (1M)` | 41.77 ms | 407.92 ms | **9.8x faster** |
+| `perez (1M)` | 41.96 ms | 585.43 ms | **14.0x faster** |
+| `dirint (8760 hourly)` | 3.25 ms | 34.66 ms | **10.7x faster** |
+| `get_total_irradiance haydavies (1M)` | 187.54 ms | 580.37 ms | **3.1x faster** |
 
-Every case is faster than pvlib, from 1.1x to 69x. The shape is the one numpy
-leaves on one core when it walks a Python-level loop per element, which is what
-Mojo's libm calls and `parallelize` do well. The three cases with the least
-margin -- `isotropic` at 1.1x, `tools.cosd` at 1.3x and `dni` at 1.3x -- are
-the ones with the fewest transcendentals per element, so they are bound by
-loads, stores and the thread launch rather than by libm, and there is little
-arithmetic to remove. All three straddle parity run to run: across the seven
-invocations `isotropic` measured between 0.6x and 1.8x of pvlib and `dni`
-between 0.8x and 2.3x, so they should be read as "no reliable speedup" rather
-than as a win. `nrel_earthsun_distance` (2.0x) is the smallest case with a real
-margin: with `esd` set the SPA loop does a handful of operations per timestamp,
-`solar_position_loop` already dispatches at 1024 elements, and the 14.02 ms
-pvlib takes for the same work is mostly its own dispatch. Measuring the Python
-wrapper around it puts `_datetime_to_unixtime` at a small fraction of the
-total, so there is no per-element overhead left on the host side either. It is
-left alone.
+Every case is faster than pvlib on this run, from 1.1x to 57x. The shape is the
+one numpy leaves on one core when it walks a Python-level loop per element,
+which is what Mojo's libm calls and `parallelize` do well. The three cases with
+the least margin -- `isotropic` at 1.1x, `tools.cosd` at 1.1x and `dni` at
+1.3x -- are the ones with the fewest transcendentals per element, so they are
+bound by loads, stores and the thread launch rather than by libm, and there is
+little arithmetic to remove. Those three straddle parity run to run on a host
+this loaded, so they should be read as "no reliable speedup" rather than as a
+win; rerun `pixi run bench` to see the current spread.
 
-### The two fusions this round
-
-Both were found by profiling the kernels rather than the API, and both are kept
-because the measurement says so.
-
-**The day-angle models dispatched twice.** `equation_of_time_spencer71`,
-`equation_of_time_pvcdrom`, `declination_spencer71` and `declination_cooper69`
-each called `_calculate_simple_day_angle` as one dispatch and then ran their own
-body as a second, so each paid the thread launch twice over. Fusing the day
-angle into the model's own `one` makes it one pass and one launch, and still
-fills the caller's `day_angle` buffer bit for bit. The measurement behind that
-decision was taken on an earlier run of this machine: 13.84 ms for the two
-dispatches against 8.42 ms for one, at 1M elements, best of 31, interleaved --
-1.6x on the kernel. The four fused models are covered by
-`tests/test_parity.py::test_fused_day_angle_kernels_agree_across_the_threshold`,
-which runs each of them below its threshold and above it and requires both
-sides to be bit-identical, and by `test_kernels.py::test_day_angle_kernels_still_fill_day_angle`,
-which pins the `day_angle` buffer itself.
-
-**`poa_components` walked its inputs three times.** It is the tail of
-`get_total_irradiance` and was the single largest cost in that call, because
-upstream writes it as three whole-array numpy expressions over the same four
-buffers. The three outputs are elementwise functions of the same four inputs,
-so they are now one kernel pass that writes all three (1M): 26.28 ms for the
-three numpy passes against 7.40 ms for one kernel pass, 3.6x, measured on the
-same machine.
-
-Those two numbers are from the round that made the change and are quoted as the
-justification for keeping it; the table above is the current state of the same
-code and is measured end to end through the public API.
+`nrel_earthsun_distance` (1.2x here) is the smallest case with a real margin:
+with `esd` set the SPA loop does a handful of operations per timestamp, so
+what is left is the dispatch and the Python wrapper rather than the kernel.
 
 ### What the multi-core path is worth
 
 `max.algorithm.parallelize`, one work item per element, one worker per physical
-core. The launch is not free and its size is the number that governs every
-kernel here: on this host a probe kernel that does one store per work item and
-nothing else costs about 5 ms at 36 workers whether it is given 1000 items or
-1,000,000, so the cost is a fixed thread-pool wake-up and join rather than
-anything proportional to the input. That fixed cost is why the `PAR_MIN_*`
-thresholds exist, and why fusing two dispatches into one is worth more here than
-any per-element optimisation. The six-run spread in the table above is itself a
-measure of that cost: the same case varies by 2-3x run to run depending on what
-else the 72-thread box is doing.
+core. The launch is not free, and its fixed cost is what governs every kernel
+here: a probe kernel that does one store per work item and nothing else costs
+the same whether it is given 1000 items or 1,000,000, so the cost is a
+thread-pool wake-up and join rather than anything proportional to the input.
+That is why the `PAR_MIN_*` thresholds in `src/types.mojo` exist, and why
+fusing two dispatches into one is worth more here than any per-element
+optimisation. The four day-angle models and `poa_components` are written as one
+pass for that reason, and `tests/test_parity.py` checks the fused kernels give
+bit-identical answers below and above their threshold.
 
-The table below is a serial-only build of the same source (the four `PAR_MIN_*`
-constants raised out of reach) against the shipped one, 1M elements, same
-process, best of 25, measured on this host:
-
-| kernel | serial | parallel | |
-| --- | ---: | ---: | --- |
-| `disc` | 188.5 ms | 15.3 ms | **12.3x** |
-| `reindl` | 87.4 ms | 11.8 ms | **7.4x** |
-| `campbell_norman` | 75.8 ms | 10.6 ms | **7.1x** |
-| `perez` | 87.7 ms | 12.6 ms | **7.0x** |
-| `get_extra_radiation` | 72.4 ms | 11.2 ms | **6.5x** |
-| `aoi_projection` | 52.7 ms | 9.3 ms | **5.7x** |
-| `haydavies` | 63.7 ms | 10.4 ms | **6.1x** |
-| `boland` | 53.4 ms | 9.1 ms | **5.9x** |
-| `erbs` | 35.6 ms | 8.6 ms | **4.1x** |
-| `get_relative_airmass` | 14.7 ms | 6.3 ms | **2.4x** |
-| `tdew_from_rh` | 15.7 ms | 6.9 ms | **2.3x** |
-| `dni` | 15.4 ms | 6.8 ms | **2.3x** |
-| `tools.cosd` | 10.4 ms | 6.1 ms | **1.7x** |
-| `isotropic` | 11.4 ms | 6.9 ms | **1.7x** |
-| `diffuse_par_spitters` | 21.0 ms | 6.5 ms | **3.2x** |
-| `equation_of_time_spencer71` | 49.7 ms | 8.0 ms | **6.2x** |
-| `clearsky_index` | 4.3 ms | 4.0 ms | **1.1x** |
-
-Parallelism pays on every kernel in the hot list, so it is kept everywhere the
-work is heavy enough to amortise the launch. The spread is what a fixed
-per-call cost looks like: `disc` and `get_extra_radiation` do tens of
-transcendentals per element and scale nearly linearly, while `clearsky_index`
-costs a divide and two loads per element, so the launch against 4.3 ms of work
-leaves almost nothing. The four `PAR_MIN_*` constants in `src/types.mojo` are
-the break-even points, one per tier of per-element cost.
-
-Three kernels deliberately stay serial at every size. `clearsky_index`,
+Three kernels deliberately stay serial at every size: `clearsky_index`,
 `dirindex` and `hour_angle` have no transcendental, so their serial pass is
 bound by the loads and the stores and a thread launch costs more than the work
-does -- the 1.1x above is the whole of the headroom there is. `dirint`'s
-coefficient lookup is a table read and a multiply and stays serial so that only
-one of its three passes pays for a launch.
+does. `dirint`'s coefficient lookup is a table read and a multiply and stays
+serial so that only one of its three passes pays for a launch.
 
-These figures are quoted from the round that measured them, at a lower host
-load than the table above; they are the justification for the thresholds, and
-the `PAR_MIN_*` constants are re-measurable by raising them and re-running
-`pixi run bench`.
+The thresholds are re-measurable rather than asserted: raise the `PAR_MIN_*`
+constants out of reach and re-run `pixi run bench` to get the serial numbers
+for the same host and the same load.
 
 ### What did not pay, and why
 
 **SIMD.** Every kernel in the hot list is libm-bound: it makes scalar `sin`,
-`cos`, `exp` and `pow` calls, and widening the load and the store around a
-scalar libm call moves nothing. That was measured rather than assumed:
-`simd_width_of[DType.float64]()` is 4 on this host, and a probe of each
-`std.math` function over a 1M `SIMD[float64, 4]` loop, against the same kernel
-written scalar, gave:
+`cos`, `exp` and `pow` calls. A probe of `std.math` over a `SIMD[float64, 4]`
+loop against the same operation written scalar was run against this toolchain
+during development and gained nothing on any transcendental -- `sqrt`, `exp`,
+`sin`, `tan` and `**` were all within noise of scalar, and `cos` was slower on
+the `SIMD` than on the scalar libm call it replaces -- so the kernels are left
+scalar rather than rewritten into a form that measures the same and reads
+worse. That probe is not part of `pixi run bench`, so no numbers are quoted for
+it here. Two further blockers are worth naming for anyone who tries: `SIMD` has
+no `.min()`/`.max()` methods in this dialect, and a `SIMD` comparison yields a
+scalar `Bool`, so there is no `where`/`select` on a `SIMD` value either -- a
+masked vector version of `clearsky_index` does not compile.
 
-| op | scalar 1M | SIMD 1M | |
-| --- | ---: | ---: | --- |
-| `add` / `max` / `min` (arithmetic only) | 0.71 ms | 0.70 ms | already vectorized |
-| `sqrt` | 2.58 ms | 2.58 ms | no gain |
-| `exp` | 3.22 ms | 3.18 ms | no gain |
-| `cos` | 14.45 ms | 12.34 ms | **2% slower** |
-| `sin` | 13.12 ms | 13.12 ms | no gain |
-| `tan` | 16.48 ms | 16.48 ms | no gain |
-| `x ** 2.5` | 29.41 ms | 29.41 ms | no gain |
-
-Only the arithmetic rows are already vectorized by the compiler, and they were
-already at memory bandwidth; nothing else gained anything, and `cos` on a
-`SIMD` is slightly slower than the scalar libm call it replaces. So there is no
-SIMD rung to take here, and the kernels are left as found rather than rewritten
-into a form that measures the same and reads worse. Two further blockers are
-worth naming for anyone who tries: `SIMD` has no `.min()`/`.max()` methods in
-this dialect, and a `SIMD` comparison yields a scalar `Bool`, so there is no
-`where`/`select` on a `SIMD` value either -- a masked vector version of
-`clearsky_index` does not compile. `exp` and `sqrt` on a `SIMD` also disagree
-with their scalar selves in the last ulp, so vectorizing them would move the
-parity tolerances for no speed.
-
-**The GPU.** The host API is present and working on this toolchain: `from
-max.gpu.host import DeviceContext`, `enqueue_create_buffer`, `enqueue_copy`,
-`enqueue_function` and `synchronize` all compile and run on this machine, a
-1M-element float64 `exp` round trip (copy in, one launch, copy out, `grid_dim`
-covering the tail) returns results matching numpy to 1e-12 in about 3 ms, and
-the device reports itself available. It is still not shipped, and the reason is
-the one below.
-
-The NVIDIA backend in `mojo ==1.2.0.dev2026092905` has no float64
-trigonometry: a kernel that calls `cos` on a `Pointer[Float64]` fails the
-offload pass with `constraint failed: DType.float64 is not supported for cos on
-NVIDIA GPU`, and the same is true of `sin`, `tan`, `asin`, `acos` and `atan2`.
-`exp`, `log`, `sqrt` and `**` do offload, and that split was confirmed by
-building both a `cos` and an `exp` device kernel in one file: the `exp` kernel
-compiles and runs, the `cos` kernel takes the whole file down at the offload
-pass. Every model in this port except `calculate_deltat` is built on the
-functions that do not, and supplying them would mean writing float64
-trigonometry from scratch for the device, which is a change of numerics rather
-than an optimisation.
-
-The arithmetic is not the deciding factor anyway: at 1M elements the whole GPU
-round trip measured 32.9 ms against 22.9 ms for the CPU kernel on the one hot
-kernel with no trig in it, because two PCIe copies and one launch cost more
-than a `cos` and a `sin` per element on 36 cores. This is a CPU port on its
-merits, not because the GPU was unavailable.
+**The GPU.** The host API is present and working on this toolchain
+(`max.gpu.host`'s `DeviceContext`, `enqueue_create_buffer`, `enqueue_copy`,
+`enqueue_function`, `synchronize` all compile and run, and the device reports
+itself available), but it is not shipped for a concrete reason rather than a
+taste one: the NVIDIA backend in `mojo ==1.2.0.dev2026092905` has no float64
+trigonometry. A kernel calling `cos` on a `Pointer[Float64]` fails the offload
+pass with `constraint failed: DType.float64 is not supported for cos on NVIDIA
+GPU`, and the same holds for `sin`, `tan`, `asin`, `acos` and `atan2`. `exp`,
+`log`, `sqrt` and `**` do offload. Every model in this port except
+`calculate_deltat` is built on the functions that do not, and supplying them
+would mean writing float64 trigonometry from scratch for the device, which is
+a change of numerics rather than an optimisation.
 
 **Nested parallelism and thread reuse.** `sync_parallelize` takes no worker
 count, and the two-argument `parallelize` form is documented as crashing when
 called from a ctypes host, so the explicit three-argument form is used.
-Handing out contiguous chunks instead of one item per element was measured and
-is not taken: a chunked `cos` pass over 1M came in at 6.28 ms with 64k chunks
-and 6.20 ms with 16k chunks, against 6.43 ms for the one-item-per-element
-form. That is noise, and it costs extra lines in every kernel.
+Handing out contiguous chunks instead of one item per element was measured
+during development and made no difference, so the simpler one-item-per-element
+form is kept.
 
 ## How it works
 

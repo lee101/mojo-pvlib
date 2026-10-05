@@ -20,30 +20,6 @@ from spa_tables import (
 )
 
 
-def julian_day_dt(
-    year: Int, month: Int, day: Int, hour: Int, minute: Int, second: Int,
-    microsecond: Int
-) -> Float64:
-    """This is the original way to calculate the julian day from the NREL paper.
-    However, it is much faster to convert to unix/epoch time and then convert
-    to julian day. Note that the date must be UTC."""
-    var y = year
-    var m = month
-    if m <= 2:
-        y = y - 1
-        m = m + 12
-    var a = Int(y // 100)
-    var b = 2 - a + Int(a * 0.25)
-    var frac_of_day = (Float64(microsecond) / 1e6 +
-                       Float64(second + minute * 60 + hour * 3600)) * 1.0 / (3600 * 24)
-    var d = Float64(day) + frac_of_day
-    var jd = Float64(Int(365.25 * Float64(y + 4716))) +
-             Float64(Int(30.6001 * Float64(m + 1))) + d - 1524.5
-    if jd > 2299160.0:
-        jd += Float64(b)
-    return jd
-
-
 def julian_day(unixtime: Float64) -> Float64:
     var jd = unixtime * 1.0 / 86400 + 2440587.5
     return jd

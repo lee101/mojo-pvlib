@@ -3,7 +3,7 @@
 `test_parity.py` drives the same kernels through the Python API, which is how a
 caller reaches them. That is good coverage but weak evidence: a kernel wired up
 and wired to the wrong buffer would still ship green, because nothing observes
-the symbol itself. This module closes that gap -- it calls all 56 `mpv_*` ctypes
+the symbol itself. This module closes that gap -- it calls all 57 `mpv_*` ctypes
 entry points directly, with hand-built input buffers, and asserts on the values
 that come back.
 
@@ -408,9 +408,26 @@ def test_mpv_angstrom_aod_at_lambda(lib):
     aod0 = buf(np.linspace(0.02, 0.5, 37))
     lam0 = buf(np.linspace(380.0, 800.0, 37))
     aod1 = np.full(37, np.nan)
-    lib.mpv_angstrom_aod_at_lambda(a(aod0), a(lam0), a(aod1), 37, 1.14, 700.0)
+    alpha = buf(np.full(37, 1.14))
+    lam1 = buf(np.full(37, 700.0))
+    lib.mpv_angstrom_aod_at_lambda(a(aod0), a(lam0), a(aod1), a(alpha), a(lam1), 37)
     assert_same(aod1,
                 pvlib.atmosphere.angstrom_aod_at_lambda(aod0, lam0), rtol=POW_TOL)
+
+
+def test_mpv_angstrom_aod_at_lambda_is_elementwise_in_alpha(lib):
+    # alpha and lambda1 are buffers, so a per-element alpha is honoured rather
+    # than answered with its first element.
+    aod0 = buf(np.linspace(0.02, 0.5, 37))
+    lam0 = buf(np.linspace(380.0, 800.0, 37))
+    alpha = buf(np.linspace(0.5, 2.0, 37))
+    lam1 = buf(np.linspace(600.0, 900.0, 37))
+    aod1 = np.full(37, np.nan)
+    lib.mpv_angstrom_aod_at_lambda(a(aod0), a(lam0), a(aod1), a(alpha),
+                                   a(lam1), 37)
+    assert_same(aod1,
+                pvlib.atmosphere.angstrom_aod_at_lambda(aod0, lam0, alpha, lam1),
+                rtol=POW_TOL)
 
 
 def test_mpv_angstrom_alpha(lib):

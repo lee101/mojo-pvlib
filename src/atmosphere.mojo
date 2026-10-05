@@ -247,14 +247,20 @@ def tdew_from_rh(
 
 
 def angstrom_aod_at_lambda(
-    aod0: F64, lambda0: F64, aod1: F64, n: Int, alpha: Float64, lambda1: Float64
+    aod0: F64, lambda0: F64, aod1: F64, alpha: F64, lambda1: F64, n: Int
 ):
-    """
-    Get AOD at specified wavelength using Angstrom turbidity model.
+    """Get AOD at specified wavelength using Angstrom turbidity model.
+
+    `alpha` and `lambda1` are buffers rather than kernel scalars because numpy
+    broadcasts them against the series, so a per-element `alpha` is legal input
+    and reading only its first element would answer for the wrong value.
     """
     def one(i: Int) {aod0, lambda0, aod1, alpha, lambda1}:
         aod1.unsafe_store(
-            i, aod0.unsafe_load(i) * ((lambda1 / lambda0.unsafe_load(i)) ** (-alpha))
+            i,
+            aod0.unsafe_load(i)
+            * ((lambda1.unsafe_load(i) / lambda0.unsafe_load(i))
+               ** (-alpha.unsafe_load(i))),
         )
 
     if n < PAR_MIN_CHEAP:

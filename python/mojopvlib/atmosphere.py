@@ -163,14 +163,12 @@ def angstrom_aod_at_lambda(aod0, lambda0, alpha=1.14, lambda1=700.0):
     """
     Get AOD at specified wavelength using Angstrom turbidity model.
     """
-    n, (a0, l0) = vectors(aod0, lambda0)
+    n, (a0, l0, al, l1) = vectors(aod0, lambda0, alpha, lambda1)
     aod1 = out(n)
     lib().mpv_angstrom_aod_at_lambda(
-        addr(a0), addr(l0), addr(aod1), n, float(np.ravel(alpha)[0]),
-        float(np.ravel(lambda1)[0])
+        addr(a0), addr(l0), addr(aod1), addr(al), addr(l1), n
     )
     return shaped(aod1, aod0, lambda0)
-
 
 def angstrom_alpha(aod1, lambda1, aod2, lambda2):
     r"""

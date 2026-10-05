@@ -240,9 +240,9 @@ def mpv_tdew_from_rh(
 
 @export("mpv_angstrom_aod_at_lambda")
 def mpv_angstrom_aod_at_lambda(
-    aod0: Int, lambda0: Int, aod1: Int, n: Int, alpha: Float64, lambda1: Float64
+    aod0: Int, lambda0: Int, aod1: Int, alpha: Int, lambda1: Int, n: Int
 ) abi("C"):
-    angstrom_aod_at_lambda(p(aod0), p(lambda0), p(aod1), n, alpha, lambda1)
+    angstrom_aod_at_lambda(p(aod0), p(lambda0), p(aod1), p(alpha), p(lambda1), n)
 
 
 @export("mpv_angstrom_alpha")

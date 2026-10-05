@@ -52,7 +52,7 @@ _SIGNATURES = {
     "mpv_kasten96_lt": ([I, I, I, I, I], None),
     "mpv_rh_from_tdew": ([I, I, I, I, F, F, F], None),
     "mpv_tdew_from_rh": ([I, I, I, I, F, F, F], None),
-    "mpv_angstrom_aod_at_lambda": ([I, I, I, I, F, F], None),
+    "mpv_angstrom_aod_at_lambda": ([I, I, I, I, I, I], None),
     "mpv_angstrom_alpha": ([I, I, I, I, I, I], None),
     "mpv_windspeed_powerlaw": ([I, I, I, F, I, I], None),
     # irradiance
@@ -210,6 +210,25 @@ def broadcast(a, n: int) -> np.ndarray:
         f"operands could not be broadcast together with shapes "
         f"({a.size},) ({n},) "
     )
+
+
+def _kernel_scalar(value, name="argument"):
+    """A kernel's scalar argument, as numpy's scalar arithmetic would read it.
+
+    A number passes through; an array argument is a length-1 operand and its
+    value is taken, exactly as `number * array` reads `float(number)`. A longer
+    array cannot be honoured by a scalar slot in the ABI, so it is refused
+    rather than quietly truncated.
+    """
+    if np.ndim(value) == 0:
+        return float(value)
+    flat = np.ravel(value)
+    if flat.size != 1:
+        raise TypeError(
+            f"only length-1 arrays can be used as a scalar {name}, "
+            f"got {flat.size}"
+        )
+    return float(flat[0])
 
 
 def vectors(*values):

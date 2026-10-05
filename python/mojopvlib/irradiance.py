@@ -15,8 +15,8 @@ import pandas as pd
 
 from . import atmosphere
 from ._lib import (
-    EXTRA_RADIATION_METHODS, addr, broadcast, dirint_coeffs, is_series, lib,
-    out, perez_coefficient_table, shaped, vectors,
+    EXTRA_RADIATION_METHODS, _kernel_scalar, addr, broadcast, dirint_coeffs,
+    is_series, lib, out, perez_coefficient_table, shaped, vectors,
 )
 from . import tools
 from . import solarposition
@@ -115,25 +115,6 @@ def _doy_to_datetimeindex(doy, epoch_year):
         pd.Timestamp(f"{int(epoch_year)}-01-01") + pd.Timedelta(days=int(d) - 1)
         for d in np.atleast_1d(doy)
     ])
-
-
-def _kernel_scalar(value, name="argument"):
-    """A kernel's scalar argument, as numpy's scalar arithmetic would read it.
-
-    A number passes through; an array argument is a length-1 operand and its
-    value is taken, exactly as `number * array` reads `float(number)`. A longer
-    array cannot be honoured by a scalar slot in the ABI, so it is refused
-    rather than quietly truncated.
-    """
-    if np.ndim(value) == 0:
-        return float(value)
-    flat = np.ravel(value)
-    if flat.size != 1:
-        raise TypeError(
-            f"only length-1 arrays can be used as a scalar {name}, "
-            f"got {flat.size}"
-        )
-    return float(flat[0])
 
 
 def _doy(datetime_or_doy, epoch_year=2014):

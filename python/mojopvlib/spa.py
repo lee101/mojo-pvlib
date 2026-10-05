@@ -21,6 +21,11 @@ def solar_position_loop(unixtime, delta_t, loc_args, out_):
     lat, lon, elev, pressure, temp, atmos_refract, sst, esd = (
         float(v) for v in loc_args
     )
+    if delta_t is None:
+        # The kernel dereferences delta_t per element; upstream fills it with
+        # `np.full_like`, which a None cannot be. Refuse it here rather than
+        # handing the kernel a null address.
+        raise TypeError("delta_t must be a number or an array, not None")
     n, (utime, dt) = vectors(unixtime, delta_t)
     res = np.zeros((6, n), dtype=np.float64)
     lib().mpv_solar_position_loop(
